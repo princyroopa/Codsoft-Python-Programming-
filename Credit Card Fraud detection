@@ -1,0 +1,52 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import SMOTE
+
+# -------- Load Dataset --------
+df = pd.read_csv("creditcard.csv")
+print("Dataset Loaded Successfully")
+print(df.head())
+
+# -------- Separate Features & Target --------
+X = df.drop("Class", axis=1)
+y = df["Class"]
+
+# -------- Handle Missing Values in Target Variable --------
+df_cleaned = df.dropna(subset=["Class"])
+X = df_cleaned.drop("Class", axis=1)
+y = df_cleaned["Class"]
+
+# -------- Normalize Features --------
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# -------- Handle Class Imbalance (SMOTE) --------
+sm = SMOTE(random_state=42)
+X_res, y_res = sm.fit_resample(X_scaled, y)
+
+print("\nBefore SMOTE class count:\n", y.value_counts())
+print("\nAfter SMOTE class count:\n", y_res.value_counts())
+
+# -------- Train-Test Split --------
+X_train, X_test, y_train, y_test = train_test_split(
+    X_res, y_res, test_size=0.2, random_state=42
+)
+
+# -------- Train Model --------
+model = LogisticRegression(max_iter=500)
+model.fit(X_train, y_train)
+
+# -------- Predict --------
+y_pred = model.predict(X_test)
+
+# -------- Evaluation --------
+print("\nAccuracy:", round(accuracy_score(y_test, y_pred)*100, 2), "%")
+
+print("\nClassification Report:\n")
+print(classification_report(y_test, y_pred))
+
+print("\nConfusion Matrix:\n")
+print(confusion_matrix(y_test, y_pred))
