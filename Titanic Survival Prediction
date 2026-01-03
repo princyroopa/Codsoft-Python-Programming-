@@ -1,0 +1,56 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+# ---------- Load Dataset ----------
+df = pd.read_csv("titanic.csv")
+
+print("Dataset Loaded Successfully\n")
+print(df.head())
+
+# ---------- Select Feature Columns ----------
+features = ["Pclass", "Sex", "Age", "Fare", "SibSp", "Parch"]
+target = "Survived"
+
+data = df[features + [target]]
+
+# ---------- Handle Missing Values ----------
+data["Age"].fillna(data["Age"].median(), inplace=True)
+
+# ---------- Convert Sex to Numeric ----------
+data["Sex"] = data["Sex"].map({"male": 0, "female": 1})
+
+# ---------- Split Data ----------
+X = data[features]
+y = data[target]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=0
+)
+
+# ---------- Build Model ----------
+model = LogisticRegression(max_iter=300)
+model.fit(X_train, y_train)
+
+# ---------- Predict ----------
+y_pred = model.predict(X_test)
+
+# ---------- Accuracy ----------
+accuracy = accuracy_score(y_test, y_pred)
+print("\nModel Accuracy:", round(accuracy * 100, 2), "%")
+
+# ---------- Sample Prediction ----------
+sample_passenger = pd.DataFrame({
+    "Pclass":[3],
+    "Sex":[0],      # 0 = male, 1 = female
+    "Age":[22],
+    "Fare":[7.25],
+    "SibSp":[1],
+    "Parch":[0]
+})
+
+prediction = model.predict(sample_passenger)
+
+print("\nSample Passenger Prediction:")
+print("Survived" if prediction[0]==1 else "Not Survived")
